@@ -1,6 +1,6 @@
 # My Crypto Wallet
 
-My Crypto Wallet is a simple web application that allows users to connect their MetaMask wallet and view their Ethereum account balance. This project uses React and Web3.js for interacting with the Ethereum blockchain.
+My Crypto Wallet is a simple web application that allows users to connect their MetaMask wallet and view their Ethereum account balance. This project uses Next, React and Web3.js for interacting with the Ethereum blockchain.
 
 ## Features
 
