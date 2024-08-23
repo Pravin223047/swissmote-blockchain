@@ -108,7 +108,7 @@ const ConnectWallet = () => {
         <div className="mt-4">
           <div className="flex items-center gap-x-2 flex-col xl:flex-row">
             <p className="font-semibold text-blue-900">Account:</p>
-            <p className="text-black text-sm lg:text-lg">{account}</p>
+            <p className="text-black text-sm lg:text-md">{account}</p>
           </div>
           <div className="flex items-center gap-x-2 flex-col xl:flex-row">
             <p className="font-semibold text-blue-900">Balance:</p>
