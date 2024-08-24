@@ -1,71 +1,95 @@
-# My Crypto Wallet
+# ConnectWallet Component
 
-My Crypto Wallet is a simple web application that allows users to connect their MetaMask wallet and view their Ethereum account balance. This project uses Next, React and Web3.js for interacting with the Ethereum blockchain.
+## Overview
+
+The `ConnectWallet` component is a React application for connecting and managing different blockchain wallets. It supports Ethereum, Polygon, Solana, and Bitcoin networks, and allows users to switch between real and dummy accounts. The component also includes a simple coin flip game where users can wager and see the results based on real or dummy balances.
 
 ## Features
 
-- Connects to MetaMask wallet.
-- Displays Ethereum account address and balance.
-- Responsive design for mobile and desktop devices.
-- Provides feedback with toast messages.
+- **Blockchain Selection**: Users can select between Ethereum, Polygon, Solana, and Bitcoin.
+- **Connect Real Account**: Connects to a real wallet for the selected blockchain.
+- **Connect Dummy Account**: Switches to a dummy account with a preset balance.
+- **Balance Display**: Shows the balance of the connected account (real or dummy).
+- **Wager Input**: Allows users to enter a wager amount for the coin flip game.
+- **Coin Flip Game**: Users can flip a coin and win or lose based on their wager and the result.
+- **Responsive UI**: Designed to be professional and visually appealing with Tailwind CSS.
 
-## Getting Started
+## Installation
 
-Follow these steps to get a copy of the project up and running on your local machine for development and testing purposes.
+1. **Clone the Repository**:
 
-### Prerequisites
+    ```bash
+    git clone https://github.com/yourusername/your-repository.git
+    ```
 
-- [Node.js](https://nodejs.org/) (>=14.x)
-- [MetaMask](https://metamask.io/) browser extension
+2. **Navigate to the Project Directory**:
 
-### Installation
+    ```bash
+    cd your-repository
+    ```
 
-1. **Clone the repository**
+3. **Install Dependencies**:
 
-   ```bash
-   git clone https://github.com/your-username/my-crypto-wallet.git
-   cd my-crypto-wallet
-   ```
+    ```bash
+    npm install
+    ```
 
-2. **Install dependencies**
+4. **Run the Development Server**:
 
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm run dev
+    ```
 
-3. **Start the development server**
+5. **Open the Application**:
 
-   ```bash
-   npm run dev
-   ```
+    Open your browser and navigate to `http://localhost:3000` to view the application.
 
-   This will start the development server at `http://localhost:3000`.
+## Usage
 
-### Usage
+1. **Select Blockchain**:
+   - Choose the blockchain you want to connect to from the dropdown menu.
 
-1. Open your browser and navigate to `http://localhost:3000`.
-2. Ensure that you have the MetaMask extension installed and set up.
-3. Click the "Connect Wallet" button.
-4. MetaMask will prompt you to connect your account. Accept the request.
-5. Once connected, your Ethereum account address and balance will be displayed on the page.
+2. **Connect to Wallet**:
+   - Click "Connect RealAccount" to connect your real wallet or "Connect DummyAccount" to connect a dummy account.
 
-### Code Structure
+3. **View Balance**:
+   - The balance of the connected account will be displayed.
 
-- **`components/ConnectWallet/ConnectWallet.tsx`**: Contains the main logic for connecting to MetaMask and displaying account information.
-- **`pages/_app.tsx`**: The main entry point for the Next.js application, rendering the `App` component.
-- **`public/cryptoconnect.png`**: Logo image used in the application.
-- **`styles/globals.css`**: Global CSS file for styling.
+4. **Enter Wager**:
+   - Input the amount you want to wager for the coin flip game.
 
-### Contributing
+5. **Flip Coin**:
+   - Choose "Heads" or "Tails" and click "Flip Coin" to play the game. The result will show whether you won or lost the flip.
 
-Feel free to open issues or submit pull requests if you find any bugs or have suggestions for improvements. Please ensure that your code adheres to the project's coding standards and includes appropriate tests.
+## Configuration
 
-### License
+- **Ethereum and Polygon**: Uses MetaMask for connecting wallets.
+- **Solana**: Requires a Solana wallet extension.
+- **Bitcoin**: Currently a placeholder implementation; replace with actual connection logic if needed.
+
+## Code Structure
+
+- **`ConnectWallet.tsx`**: Main component file containing logic for connecting wallets, displaying balances, and handling the coin flip game.
+- **`web3`**: Used for interacting with Ethereum and Polygon networks.
+- **`solana`**: Used for interacting with Solana network.
+
+## Contributing
+
+Feel free to open issues or submit pull requests if you have suggestions or improvements. Follow these guidelines:
+
+- Fork the repository.
+- Create a new branch for your feature or bug fix.
+- Commit your changes.
+- Push to your forked repository.
+- Open a pull request to the main repository.
+
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### Acknowledgments
+## Acknowledgments
 
-- [React](https://reactjs.org/) - JavaScript library for building user interfaces
-- [Web3.js](https://web3js.readthedocs.io/en/v1.7.1/) - Ethereum JavaScript API
-- [MetaMask](https://metamask.io/) - Cryptocurrency wallet and gateway to blockchain apps
+- **React**: For building the user interface.
+- **Tailwind CSS**: For styling the components.
+- **Web3.js**: For interacting with Ethereum and Polygon.
+- **Solana Web3.js**: For interacting with the Solana blockchain.
