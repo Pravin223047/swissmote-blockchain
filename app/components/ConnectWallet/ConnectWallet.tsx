@@ -239,6 +239,15 @@ const ConnectWallet = () => {
           >
             {loading ? "Connecting..." : "Connect RealAccount"}
           </button>
+          <button
+            onClick={connectDummyAccount}
+            className={`w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded transition duration-200 ease-in-out ${
+              loading ? "bg-gray-400 cursor-not-allowed" : ""
+            }`}
+            disabled={loading}
+          >
+            {loading ? "Connecting..." : "Connect DummyAccount"}
+          </button>
         </>
       ) : (
         <>
