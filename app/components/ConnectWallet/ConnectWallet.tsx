@@ -1,32 +1,41 @@
 "use client";
 
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Web3 from "web3";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "./toastStyles.css"; // Import the custom CSS file
 
 declare global {
   interface Window {
     ethereum: any;
+    solana: any;
+    bitcoin: any;
   }
 }
 
 const ConnectWallet = () => {
+  const [blockchain, setBlockchain] = useState<string>("Ethereum");
   const [balance, setBalance] = useState<string | null>(null);
+  const [dummyBalance, setDummyBalance] = useState<number>(5); // Default dummy balance
   const [account, setAccount] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [wager, setWager] = useState<string>("0.1");
+  const [flipResult, setFlipResult] = useState<string | null>(null);
+  const [selectedSide, setSelectedSide] = useState<string>("Heads");
+  const [isRealAccount, setIsRealAccount] = useState<boolean>(false);
 
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length > 0) {
         setAccount(accounts[0]);
         fetchBalance(accounts[0]);
+        setIsRealAccount(true);
       } else {
         setAccount(null);
         setBalance(null);
+        setIsRealAccount(false);
       }
     };
 
@@ -50,72 +59,290 @@ const ConnectWallet = () => {
     };
   }, []);
 
-  const connectWallet = async () => {
-    if (window.ethereum) {
-      setLoading(true);
-      setError(null);
+  useEffect(() => {
+    // Reset all relevant state when blockchain changes
+    setAccount(null);
+    setBalance(null);
+    setIsRealAccount(false);
+    setFlipResult(null);
+    setError(null);
 
-      try {
-        const web3 = new Web3(window.ethereum);
-        const accounts = await window.ethereum.request({
-          method: "eth_requestAccounts",
-        });
-        setAccount(accounts[0]);
-        fetchBalance(accounts[0]);
-        toast.success("Successfully connected to your wallet!");
-      } catch (error) {
-        console.error("Error connecting wallet:", error);
-        setError("Failed to connect wallet. Please check your MetaMask setup.");
-      } finally {
-        setLoading(false);
+    // Optionally, perform blockchain-specific initialization here
+  }, [blockchain]);
+
+  const connectRealAccount = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (blockchain === "Ethereum" || blockchain === "Polygon") {
+        if (window.ethereum) {
+          const web3 = new Web3(window.ethereum);
+          const accounts = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          setAccount(accounts[0]);
+          fetchBalance(accounts[0]); // Fetch real balance
+          setIsRealAccount(true);
+          toast.success("Successfully connected to your real wallet!");
+        } else {
+          setError("Please install MetaMask to use this feature.");
+        }
+      } else if (blockchain === "Solana") {
+        if (window.solana) {
+          const resp = await window.solana.connect();
+          setAccount(resp.publicKey.toString());
+          fetchBalance(resp.publicKey.toString()); // Fetch real balance
+          setIsRealAccount(true);
+          toast.success("Successfully connected to your real Solana wallet!");
+        } else {
+          setError("Please install a Solana wallet extension.");
+        }
+      } else if (blockchain === "Bitcoin") {
+        setError("Bitcoin wallet connection not implemented.");
       }
-    } else {
-      setError(
-        "Please install MetaMask to use this feature. You can download MetaMask from the Chrome extension store."
-      );
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+      setError("Failed to connect real wallet.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const connectDummyAccount = () => {
+    setAccount("dummy-account");
+    setBalance(dummyBalance.toFixed(2));
+    setIsRealAccount(false);
+    toast.success("Connected to dummy account!");
   };
 
   const fetchBalance = async (account: string) => {
-    if (window.ethereum) {
-      const web3 = new Web3(window.ethereum);
-      try {
-        const balanceWei = await web3.eth.getBalance(account);
-        const balanceEth = web3.utils.fromWei(balanceWei, "ether");
-        setBalance(balanceEth);
-      } catch (error) {
-        console.error("Error fetching balance:", error);
-        setError("Failed to fetch balance.");
+    try {
+      if (blockchain === "Ethereum" || blockchain === "Polygon") {
+        if (window.ethereum) {
+          const web3 = new Web3(window.ethereum);
+          const balanceWei = await web3.eth.getBalance(account);
+          const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+          setBalance(balanceEth);
+        }
+      } else if (blockchain === "Solana") {
+        if (window.solana) {
+          const connection = new Connection(
+            "https://api.mainnet-beta.solana.com",
+            "confirmed"
+          );
+          const publicKey = new PublicKey(account);
+
+          // Fetch balance in lamports
+          const balance = await connection.getBalance(publicKey);
+
+          // Convert balance to SOL
+          const balanceInSOL = balance / 1000000000; // Solana uses lamports, 1 SOL = 1 billion lamports
+
+          setBalance(balanceInSOL.toFixed(2)); // Update balance state
+        } else {
+          setError("Solana wallet not detected.");
+        }
+      } else if (blockchain === "Bitcoin") {
+        setError("Bitcoin balance fetching not implemented.");
       }
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      setError(`Failed to fetch ${blockchain} balance.`);
     }
   };
 
-  const isDisabled = loading || !!account;
+  const flipCoin = () => {
+    const currentBalance =
+      account === "dummy-account" ? dummyBalance : parseFloat(balance || "0");
+
+    if (currentBalance < parseFloat(wager)) {
+      toast.error(
+        `Insufficient balance. You need at least ${wager} ${
+          blockchain === "Ethereum"
+            ? "ETH"
+            : blockchain === "Polygon"
+            ? "MATIC"
+            : blockchain === "Solana"
+            ? "SOL"
+            : blockchain === "Bitcoin"
+            ? "BTC"
+            : ""
+        } to play.`
+      );
+      return;
+    }
+
+    setLoading(true);
+    setFlipResult(null);
+
+    // Simulate a coin flip
+    setTimeout(() => {
+      const result = Math.random() < 0.5 ? "Heads" : "Tails";
+      setFlipResult(result);
+      setLoading(false);
+
+      if (result === selectedSide) {
+        if (account === "dummy-account") {
+          setDummyBalance(dummyBalance * 2); // Double the dummy balance if won
+        } else {
+          const newBalance = (parseFloat(balance || "0") * 2).toFixed(4);
+          setBalance(newBalance);
+        }
+        toast.success(`Congratulations! You won the coin flip!`);
+      } else {
+        if (account === "dummy-account") {
+          setDummyBalance(dummyBalance / 2); // Halve the dummy balance if lost
+        } else {
+          const newBalance = (parseFloat(balance || "0") / 2).toFixed(4);
+          setBalance(newBalance);
+        }
+        toast.error(`Sorry, you lost the coin flip.`);
+      }
+    }, 2000);
+  };
 
   return (
-    <div className="p-4 bg-white shadow-md rounded-lg w-full">
-      <button
-        onClick={connectWallet}
-        className={`bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200 ease-in-out ${
-          isDisabled ? "bg-gray-400 cursor-not-allowed" : ""
-        }`}
-        disabled={isDisabled}
-      >
-        {loading ? "Connecting..." : account ? "Connected" : "Connect Wallet"}
-      </button>
+    <div className="p-6 bg-white shadow-md rounded-lg w-full max-w-lg mx-auto">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
+        Connect Your Wallet
+      </h2>
+
+      <div className="flex flex-col mb-4">
+        <label
+          htmlFor="blockchain"
+          className="text-sm font-semibold text-gray-700 mb-2"
+        >
+          Select Blockchain:
+        </label>
+        <select
+          id="blockchain"
+          value={blockchain}
+          onChange={(e) => setBlockchain(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md text-gray-700"
+        >
+          <option value="Ethereum">Ethereum</option>
+          <option value="Polygon">Polygon</option>
+          <option value="Solana">Solana</option>
+          <option value="Bitcoin">Bitcoin</option>
+        </select>
+      </div>
+
+      {isRealAccount ? (
+        <>
+          <button
+            onClick={connectRealAccount}
+            className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200 ease-in-out ${
+              loading ? "bg-gray-400 cursor-not-allowed" : ""
+            }`}
+            disabled={loading}
+          >
+            {loading ? "Connecting..." : "Connect RealAccount"}
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            onClick={connectRealAccount}
+            className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200 ease-in-out ${
+              loading ? "bg-gray-400 cursor-not-allowed" : ""
+            }`}
+            disabled={loading}
+          >
+            {loading ? "Connecting..." : "Connect RealAccount"}
+          </button>
+          <button
+            onClick={connectDummyAccount}
+            className={`w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded transition duration-200 ease-in-out ${
+              loading ? "bg-gray-400 cursor-not-allowed" : ""
+            }`}
+            disabled={loading}
+          >
+            {loading ? "Connecting..." : "Connect DummyAccount"}
+          </button>
+        </>
+      )}
+
       {error && <p className="text-red-500 mt-2">{error}</p>}
+
       {account && (
-        <div className="mt-4">
-          <div className="flex items-center gap-x-2 flex-col xl:flex-row">
-            <p className="font-semibold text-blue-900">Account:</p>
-            <p className="text-black text-sm lg:text-md">{account}</p>
+        <div className="mt-6">
+          <div className="mb-4">
+            <div className="flex justify-between mb-2">
+              <p className="font-semibold text-gray-800">Account:</p>
+              <p className="text-gray-700 truncate">{account}</p>
+            </div>
+            <div className="flex justify-between mb-2">
+              <p className="font-semibold text-gray-800">Balance:</p>
+              <p className="text-gray-700">
+                {account === "dummy-account"
+                  ? dummyBalance.toFixed(2)
+                  : balance}{" "}
+                {blockchain === "Ethereum"
+                  ? "ETH"
+                  : blockchain === "Polygon"
+                  ? "MATIC"
+                  : blockchain === "Solana"
+                  ? "SOL"
+                  : blockchain === "Bitcoin"
+                  ? "BTC"
+                  : ""}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-x-2 flex-col xl:flex-row">
-            <p className="font-semibold text-blue-900">Balance:</p>
-            <p className="text-black">{balance} ETH</p>
+
+          <div className="mb-4">
+            <label
+              htmlFor="wager"
+              className="text-sm font-semibold text-gray-700 mb-2"
+            >
+              Enter Wager:
+            </label>
+            <input
+              type="number"
+              id="wager"
+              value={wager}
+              onChange={(e) => setWager(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md text-gray-700"
+            />
           </div>
+
+          <div className="mb-4">
+            <label
+              htmlFor="side"
+              className="text-sm font-semibold text-gray-700 mb-2"
+            >
+              Choose Your Side:
+            </label>
+            <select
+              id="side"
+              value={selectedSide}
+              className="w-full p-2 border border-gray-300 rounded-md text-gray-700"
+              onChange={(e) => setSelectedSide(e.target.value)}
+            >
+              <option value="Heads">Heads</option>
+              <option value="Tails">Tails</option>
+            </select>
+          </div>
+
+          <button
+            onClick={flipCoin}
+            className={`w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition duration-200 ease-in-out ${
+              loading ? "bg-gray-400 cursor-not-allowed" : ""
+            }`}
+            disabled={loading}
+          >
+            {loading ? "Flipping..." : "Flip Coin"}
+          </button>
+
+          {flipResult && (
+            <p className="mt-4 text-lg font-semibold text-gray-800">
+              Coin Flip Result: {flipResult}
+            </p>
+          )}
         </div>
       )}
+
       <ToastContainer />
     </div>
   );
